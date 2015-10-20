@@ -8,12 +8,17 @@ from . import resources
 
 class _Request:
 
-    def __init__(self, server, method, rel_url=None, body='', headers={}):
+    def __init__(self, 
+                 server, 
+                 method, 
+                 rel_url=None, 
+                 body='', 
+                 headers={}):
         self.server = server
         self.method = method
         self.rel_url = rel_url
         self.body = body
-        self.headers = headers
+        self.request_headers = headers
         if self.server.scheme == 'http':
             conn = httplib.HTTPConnection(self.server.netloc)
         else:
@@ -23,10 +28,13 @@ class _Request:
                 self.path = self.server.path
             else:
                 self.path = server.path.rstrip('/') + rel_url
-            conn.request(self.method, self.path, self.body, self.headers)
+            conn.request(self.method, 
+                         self.path, 
+                         self.body, 
+                         self.request_headers)
             response = conn.getresponse()
             self.status = response.status
-            self.headers = response.getheaders()
+            self.response_headers = response.getheaders()
             self.data = response.read()
             self.msg = response.msg
         finally:
