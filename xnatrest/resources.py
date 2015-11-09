@@ -2,13 +2,13 @@
 
 import urllib
 
-class _Resource:
+class BaseResource:
 
     def __init__(self, connection):
         self.connection = connection
         return
 
-class _ProjectsResource(_Resource):
+class ProjectsResource(BaseResource):
 
     def get(self, format=None):
         params = {}
@@ -21,10 +21,10 @@ class _ProjectsResource(_Resource):
             url = '%s?%s' % (url, urllib.urlencode(params))
         return self.connection.request('GET', url)
 
-class _ProjectResource(_Resource):
+class ProjectResource(BaseResource):
 
     def __init__(self, connection, project_id):
-        _Resource.__init__(self, connection)
+        BaseResource.__init__(self, connection)
         self.project_id = project_id
         return
 
@@ -37,7 +37,6 @@ class _ProjectResource(_Resource):
         url = '/data/archive/projects/%s' % self.project_id
         if params:
             url = '%s?%s' % (url, urllib.urlencode(params))
-        res = self.connection.request('GET', url)
-        return res
+        return self.connection.request('GET', url)
 
 # eof

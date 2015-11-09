@@ -6,7 +6,7 @@ import httplib
 from .exceptions import *
 from . import resources
 
-class _Headers:
+class HTTPHeaders:
 
     """class for storing HTTP response headers, supporting multiple values 
     for each header
@@ -59,40 +59,47 @@ class _Headers:
             raise KeyError(key)
         return values
 
-class _Request:
+class Response:
 
-    def __init__(self, 
-                 server, 
-                 method, 
-                 rel_url=None, 
-                 body='', 
-                 headers={}):
-        self.server = server
-        self.method = method
-        self.rel_url = rel_url
-        self.body = body
-        self.request_headers = headers
-        if self.server.scheme == 'http':
-            conn = httplib.HTTPConnection(self.server.netloc)
+    """response object
+
+    should not be instantiated directly by the user; use request() instead
+    """
+
+def request(server, method, rel_url=None, body='', headers={}):
+    """request(server, method, rel_url=None, body='', headers={}) -> Response
+
+    performs an HTTP request
+    """
+    if server.scheme == 'http':
+        conn = httplib.HTTPConnection(server.netloc)
+    else:
+        conn = httplib.HTTPSConnection(server.netloc)
+    try:
+        if not rel_url:
+            path = server.path
         else:
-            conn = httplib.HTTPSConnection(self.server.netloc)
-        try:
-            if not self.rel_url:
-                self.path = self.server.path
-            else:
-                self.path = server.path.rstrip('/') + rel_url
-            conn.request(self.method, 
-                         self.path, 
-                         self.body, 
-                         self.request_headers)
-            response = conn.getresponse()
-            self.status = response.status
-            self.response_headers = _Headers(response.getheaders())
-            self.data = response.read()
-            self.msg = response.msg
-        finally:
-            conn.close()
-        return
+            path = server.path.rstrip('/') + rel_url
+        conn.request(method, path, body, headers)
+        response = conn.getresponse()
+        status = response.status
+        response_headers = HTTPHeaders(response.getheaders())
+        data = response.read()
+        msg = response.msg
+    finally:
+        conn.close()
+    res = Response()
+    res.server = server
+    res.method = method
+    res.rel_url = rel_url
+    res.body = body
+    res.request_headers = headers
+    res.path = path
+    res.status = status
+    res.response_headers = response_headers
+    res.data = data
+    res.msg = msg
+    return res
 
 class Connection:
 
@@ -116,8 +123,8 @@ class Connection:
             raise ValueError('unsupported scheme "%s"' % server.scheme)
         if not server.netloc:
             raise ValueError('no server given')
-        r = _Request(server, 'GET')
-        location = r.msg.getheader('Location')
+        res = request(server, 'GET')
+        location = res.msg.getheader('Location')
         if location:
             attempted_urls.append(url)
             self._resolve_server(location, attempted_urls)
@@ -145,9 +152,9 @@ class Connection:
         If auth is given, it should be a (user, password) tuple.  If auth is 
         not given, no authorization is used.
 
-        This method bypasses the authentication handling in request() so 
-        should be used to set the connection object's authentication 
-        mechanism (and only in this case).
+        This method bypasses the authentication handling in 
+        Connection.request() so should be used to set the connection 
+        object's authentication mechanism (and only in this case).
         """
         if auth is None:
             headers = {}
@@ -155,8 +162,8 @@ class Connection:
             (user, password) = auth
             auth_string = self._generate_auth_string(user, password)
             headers = {'Authorization': auth_string}
-        r = _Request(self.server, 'GET', headers=headers)
-        cookie = r.msg.getheader('Set-Cookie')
+        res = request(self.server, 'GET', headers=headers)
+        cookie = res.msg.getheader('Set-Cookie')
         if not cookie or not cookie.startswith('JSESSIONID='):
             raise JSESSIONIDError()
         # cooke is: JSESSIONID=...........; <other cookie stuff>
@@ -175,7 +182,7 @@ class Connection:
             headers['Authorization'] = self._auth_string
         else:
             assert False
-        return _Request(self.server, method, rel_url, body, headers)
+        return request(self.server, method, rel_url, body, headers)
 
     def auth_anonymous(self):
         # log in before logging out in case there's a problem on login
@@ -196,8 +203,10 @@ class Connection:
         # log in before logging out in case there's a problem on login
         # check the authorization with a simple hit first
         auth_string = self._generate_auth_string(user, password)
-        r = _Request(self.server, 'GET', headers={'Authorization': auth_string})
-        if r.status == 401:
+        res = request(self.server, 
+                      'GET', 
+                      headers={'Authorization': auth_string})
+        if res.status == 401:
             raise AuthenticationError()
         if self.auth_type == 'jsessionid':
             self.request('DELETE', '/data/JSESSION')
@@ -228,10 +237,10 @@ class Connection:
 
     def projects(self):
         """projects() -> projects resource"""
-        return resources._ProjectsResource(self)
+        return resources.ProjectsResource(self)
 
     def project(self, project_id):
         """project(project_id) -> project resource"""
-        return resources._ProjectResource(self, project_id)
+        return resources.ProjectResource(self, project_id)
 
 # eof
