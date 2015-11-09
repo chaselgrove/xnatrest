@@ -6,6 +6,59 @@ import httplib
 from .exceptions import *
 from . import resources
 
+class _Headers:
+
+    """class for storing HTTP response headers, supporting multiple values 
+    for each header
+
+    constructor is a list of 2-tuples (name, value)
+
+    methods:
+
+        items -- the list of 2-tuples
+
+        get(name) -- get the first occurrence of the header
+
+                     raises KeyError if the header is not found
+
+                     h.get(name) is the same behavior as h[name]
+
+        get_all(name) -- get a tuple of all occurrences of the header
+
+    name comparisons are case-insensitive
+    """
+
+    def __init__(self, items):
+        self.items = items
+        return
+
+    def __getitem__(self, key):
+        key_l = key.lower()
+        for (name, value) in self.items:
+            if name.lower() == key_l:
+                return value
+        raise KeyError(key)
+
+    def __contains__(self, key):
+        key_l = key.lower()
+        for (name, value) in self.items:
+            if name.lower() == key_l:
+                return True
+        return False
+
+    def get(self, name):
+        return self[name]
+
+    def get_all(self, key):
+        values = []
+        key_l = key.lower()
+        for (name, value) in self.items():
+            if name.lower() == key_l:
+                values.append(value)
+        if not values:
+            raise KeyError(key)
+        return values
+
 class _Request:
 
     def __init__(self, 
@@ -34,7 +87,7 @@ class _Request:
                          self.request_headers)
             response = conn.getresponse()
             self.status = response.status
-            self.response_headers = response.getheaders()
+            self.response_headers = _Headers(response.getheaders())
             self.data = response.read()
             self.msg = response.msg
         finally:
@@ -176,5 +229,9 @@ class Connection:
     def projects(self):
         """projects() -> projects resource"""
         return resources._ProjectsResource(self)
+
+    def project(self, project_id):
+        """project(project_id) -> project resource"""
+        return resources._ProjectResource(self, project_id)
 
 # eof
