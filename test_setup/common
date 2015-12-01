@@ -95,18 +95,6 @@ delete_jsessionid()
 
 } # end delete_jsessionid()
 
-progname=`basename $0`
-
 trap clean_up EXIT
-
-if [ $# -ne 1 ]
-then
-    echo "usage: $progname <XNAT URL>"
-    exit 1
-fi
-
-xnat_url=`echo "$1" | sed 's+/*$++'`
-
-jsessionid1=`get_jsessionid test1 test1`
 
 # eof

@@ -21,11 +21,43 @@ create_project()
 
     echo experiment...
     experiment_url=${subject_url}/experiments/s1e1
-    curl_ $jsessionid1 -X PUT --data-binary @xml/experiment.xml $experiment_url
+    if [ $xnat_version = 1.6.3 ]
+    then
+        curl_ $jsessionid1 \
+              -X PUT \
+              --data-binary @xml/experiment.xml \
+              "${experiment_url}"
+    elif [ $xnat_version = 1.6.4 ]
+    then
+        curl_ $jsessionid1 \
+              -X PUT \
+              --data-binary @xml/experiment.xml \
+              "${experiment_url}?inbody=true"
+    else
+        msg="internal error (version unsupported in experiment creation)"
+        echo "$progname: $msg" >&2
+        return 1
+    fi
 
     echo scan...
     scan_url=${experiment_url}/scans/1
-    curl_ $jsessionid1 -X PUT --data-binary @xml/scan.xml $scan_url
+    if [ $xnat_version = 1.6.3 ]
+    then
+        curl_ $jsessionid1 \
+              -X PUT \
+              --data-binary @xml/scan.xml \
+              "${scan_url}"
+    elif [ $xnat_version = 1.6.4 ]
+    then
+        curl_ $jsessionid1 \
+              -X PUT \
+              --data-binary @xml/scan.xml \
+              "${scan_url}?inbody=true"
+    else
+        msg="internal error (version unsupported in scan creation)"
+        echo "$progname: $msg" >&2
+        return 1
+    fi
 
     echo scan files...
 
@@ -43,11 +75,27 @@ create_project()
           --data-binary @files/BPDwoPsy_030_MR_anat_qc_t.gif \
           "${file_url}?inbody=true"
 
-    echo experiment assessor...
+    echo assessor...
     assessor_url=${experiment_url}/assessors/s1e1a1
-    curl_ $jsessionid1 -X PUT --data-binary @xml/assessor.xml $assessor_url
+    if [ $xnat_version = 1.6.3 ]
+    then
+        curl_ $jsessionid1 \
+              -X PUT \
+              --data-binary @xml/assessor.xml \
+              "${assessor_url}"
+    elif [ $xnat_version = 1.6.4 ]
+    then
+        curl_ $jsessionid1 \
+              -X PUT \
+              --data-binary @xml/assessor.xml \
+              "${assessor_url}?inbody=true"
+    else
+        msg="internal error (version unsupported in assessor creation)"
+        echo "$progname: $msg" >&2
+        return 1
+    fi
 
-    echo experiment assessor files...
+    echo assessor files...
 
     res_url=${assessor_url}/out/resources/assres
     file_url=${res_url}/files/assessor_files.zip
@@ -56,14 +104,14 @@ create_project()
           --data-binary @files/assessor_files.zip \
           "${file_url}?inbody=true&extract=true"
 
-    echo experiment reconstruction...
+    echo reconstruction...
     reconstruction_url=${experiment_url}/reconstructions/s1e1r1
     curl_ $jsessionid1 \
           -X PUT \
           --data-binary @xml/reconstruction.xml \
           $reconstruction_url
 
-    echo experiment reconstruction files...
+    echo reconstruction files...
 
     res_url=${reconstruction_url}/out/resources/recres
     file_url=${res_url}/files/reconstruction_files.zip
@@ -76,6 +124,25 @@ create_project()
 
 } # end create_project()
 
+progname=`basename $0`
+
+if [ $# -ne 2 ]
+then
+    echo "usage: $progname <XNAT version> <XNAT URL>"
+    exit 1
+fi
+
+xnat_version="$1"
+
+if [ x"$xnat_version" != x"1.6.3" -a x"$xnat_version" != x"1.6.4" ]
+then
+    echo "$progname: unsupported XNAT version" >&2
+    exit 1
+fi
+
+xnat_url=`echo "$2" | sed 's+/*$++'`
+
+jsessionid1=`get_jsessionid test1 test1`
 jsessionid2=`get_jsessionid test2 test2`
 
 echo public project...
