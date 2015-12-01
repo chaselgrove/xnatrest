@@ -1,2 +1,5 @@
-NOTES
 ctest
+*.pyc
+test_setup/files/
+tests.cfg
+future
