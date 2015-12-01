@@ -1,0 +1,23 @@
+#!/bin/bash -e
+
+# See file COPYING distributed with xnatrest for copyright and license.
+
+. common
+
+echo deleting pubp/s1
+curl_ $jsessionid1 \
+      -X DELETE \
+      ${xnat_url}/data/archive/projects/pubp/subjects/s1?removeFiles=true
+
+echo deleting privp/s1
+curl_ $jsessionid1 \
+      -X DELETE \
+      ${xnat_url}/data/archive/projects/privp/subjects/s1?removeFiles=true
+
+echo
+echo exiting normally
+echo
+
+exit 0
+
+# eof

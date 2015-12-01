@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- See file COPYING distributed with xnatrest for copyright and license. -->
+<xnat:MRScan type="anat" xmlns:xnat="http://nrg.wustl.edu/xnat">
+<xnat:parameters>
+<xnat:voxelRes units="mm" x="0.9375" y="0.9375" z="1.5"/>
+<xnat:orientation>cor</xnat:orientation>
+<xnat:matrix x="256" y="256"/>
+</xnat:parameters>
+</xnat:MRScan>

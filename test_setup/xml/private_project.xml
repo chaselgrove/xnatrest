@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- See file COPYING distributed with xnatrest for copyright and license. -->
+<xnat:Project ID="privp" secondary_ID="Private Project" xmlns:xnat="http://nrg.wustl.edu/xnat">
+<xnat:name>XNAT Test Private Project</xnat:name>
+<xnat:description>A private project for the XNAT test setup.</xnat:description>
+</xnat:Project>

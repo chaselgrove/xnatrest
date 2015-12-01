@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- See file COPYING distributed with xnatrest for copyright and license. -->
+<xnat:Subject group="Control" xmlns:xnat="http://nrg.wustl.edu/xnat" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<xnat:demographics xsi:type="xnat:demographicData">
+<xnat:age>9</xnat:age>
+<xnat:gender>female</xnat:gender>
+<xnat:handedness>right</xnat:handedness>
+</xnat:demographics>
+</xnat:Subject>

@@ -1,0 +1,112 @@
+# See file COPYING distributed with xnatrest for copyright and license.
+
+curl_()
+{
+
+    jsessionid="$1"
+    shift
+
+    curl_output=`curl -sS \
+                      -w '\nHTTP_STATUS %{http_code}' \
+                      --cookie "JSESSIONID=$jsessionid" \
+                      "$@"`
+    rv=$?
+
+    status=`echo "$curl_output" | awk '/HTTP_STATUS/{print $NF}'`
+    curl_output=`echo "$curl_output" | grep -v HTTP_STATUS`
+
+    error=
+    if [ $rv -ne 0 ]
+        then error=1
+    elif [ $status != 200 -a $status != 201 ]
+    then
+        error=1
+    fi
+
+    if [ ! -z "$error" -o ! -z "$CURL_OUT" ]
+    then
+        echo "request: $@"
+        echo "HTTP status: $status"
+        echo "----- HTTP response body -----"
+        echo "$curl_output"
+        echo "----- end HTTP response body -----"
+    fi
+
+    if [ $error ]
+    then
+        return 1
+    fi
+
+    return 0
+
+} # end curl_()
+
+clean_up()
+{
+
+    if [ -z "$xnat_url" ]
+    then
+        return 0
+    fi
+
+    if [ ! -z "$jsessionid1" ]
+    then
+        delete_jsessionid $jsessionid1
+    fi
+
+    if [ ! -z "$jsessionid2" ]
+    then
+        delete_jsessionid $jsessionid2
+    fi
+
+    return 0
+
+} # end clean_up()
+
+get_jsessionid()
+{
+
+    user="$1"
+    password="$2"
+
+    if ! jsessionid=`curl -sf \
+                          -X POST \
+                          -u ${user}:${password} \
+                          "$xnat_url/data/JSESSIONID"`
+    then
+        echo "$progname: error starting session for user $user" >&2
+        return 1
+    fi
+
+    echo $jsessionid
+
+    return 0
+
+} # end get_jsessionid()
+
+delete_jsessionid()
+{
+
+    jsessionid="$1"
+
+    curl -sS -X DELETE --cookie "$jsessionid" "$xnat_url/data/JSESSION"
+
+    return 0
+
+} # end delete_jsessionid()
+
+progname=`basename $0`
+
+trap clean_up EXIT
+
+if [ $# -ne 1 ]
+then
+    echo "usage: $progname <XNAT URL>"
+    exit 1
+fi
+
+xnat_url=`echo "$1" | sed 's+/*$++'`
+
+jsessionid1=`get_jsessionid test1 test1`
+
+# eof

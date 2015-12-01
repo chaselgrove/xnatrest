@@ -1,0 +1,97 @@
+#!/bin/bash -e
+
+# See file COPYING distributed with xnatrest for copyright and license.
+
+. common
+
+create_project()
+{
+
+    accessibility=$1
+    xml=$2
+    project_url=$3
+
+    acc_url=${project_url}/accessibility/$accessibility
+    curl_ $jsessionid1 -X PUT --data-binary @$xml $project_url
+    curl_ $jsessionid1 -X PUT --data-binary @$xml $acc_url
+
+    echo subject...
+    subject_url=${project_url}/subjects/s1
+    curl_ $jsessionid1 -X PUT --data-binary @xml/subject.xml $subject_url
+
+    echo experiment...
+    experiment_url=${subject_url}/experiments/s1e1
+    curl_ $jsessionid1 -X PUT --data-binary @xml/experiment.xml $experiment_url
+
+    echo scan...
+    scan_url=${experiment_url}/scans/1
+    curl_ $jsessionid1 -X PUT --data-binary @xml/scan.xml $scan_url
+
+    echo scan files...
+
+    res_url=${scan_url}/resources/NIfTI
+    file_url=${res_url}/files/anat.nii.gz
+    curl_ $jsessionid1 \
+          -X PUT \
+          --data-binary @files/anat.nii.gz \
+          "${file_url}?inbody=true"
+
+    res_url=${scan_url}/resources/SNAPSHOTS
+    file_url=${res_url}/files/BPDwoPsy_030_MR_anat_qc_t.gif
+    curl_ $jsessionid1 \
+          -X PUT \
+          --data-binary @files/BPDwoPsy_030_MR_anat_qc_t.gif \
+          "${file_url}?inbody=true"
+
+    echo experiment assessor...
+    assessor_url=${experiment_url}/assessors/s1e1a1
+    curl_ $jsessionid1 -X PUT --data-binary @xml/assessor.xml $assessor_url
+
+    echo experiment assessor files...
+
+    res_url=${assessor_url}/out/resources/assres
+    file_url=${res_url}/files/assessor_files.zip
+    curl_ $jsessionid1 \
+          -X PUT \
+          --data-binary @files/assessor_files.zip \
+          "${file_url}?inbody=true&extract=true"
+
+    echo experiment reconstruction...
+    reconstruction_url=${experiment_url}/reconstructions/s1e1r1
+    curl_ $jsessionid1 \
+          -X PUT \
+          --data-binary @xml/reconstruction.xml \
+          $reconstruction_url
+
+    echo experiment reconstruction files...
+
+    res_url=${reconstruction_url}/out/resources/recres
+    file_url=${res_url}/files/reconstruction_files.zip
+    curl_ $jsessionid1 \
+          -X PUT \
+          --data-binary @files/reconstruction_files.zip \
+          "${file_url}?inbody=true&extract=true"
+
+    return 0
+
+} # end create_project()
+
+jsessionid2=`get_jsessionid test2 test2`
+
+echo public project...
+create_project public \
+               xml/public_project.xml \
+               ${xnat_url}/data/archive/projects/pubp
+
+echo private project...
+create_project private \
+               xml/private_project.xml \
+               ${xnat_url}/data/archive/projects/privp
+
+echo
+echo exiting normally
+echo
+
+exit 0
+
+# eof
