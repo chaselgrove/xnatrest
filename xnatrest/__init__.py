@@ -142,6 +142,8 @@ class Connection:
         if r.status != 200:
             raise VersionError()
         self.version = r.data
+        if self.version == 'Unknown version':
+            self.version = '1.6.4'
         return
 
     def _get_jsessionid(self, auth=None):
