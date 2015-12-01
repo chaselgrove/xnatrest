@@ -1,6 +1,7 @@
 # See file COPYING distributed with xnatrest for copyright and license.
 
 import unittest
+from . import config
 import xnatrest
 
 class TestConnection(unittest.TestCase):
@@ -14,12 +15,13 @@ class TestConnection(unittest.TestCase):
 
     def test_nojsessionid(self):
         with self.assertRaises(xnatrest.JSESSIONIDError):
-            c = xnatrest.Connection('http://www.nitrc.org')
+            c = xnatrest.Connection(config.non_xnat_url)
         return
 
     def test_version(self):
-        c = xnatrest.Connection('http://www.nitrc.org/ir')
-        self.assertEqual(c.version, '1.5.4')
+        for server in config.servers:
+            c = xnatrest.Connection(server['url'])
+            self.assertEqual(c.version, server['version'], server['name'])
         return
 
     def test_bad_auth(self):
