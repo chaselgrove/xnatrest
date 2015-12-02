@@ -89,7 +89,10 @@ delete_jsessionid()
 
     jsessionid="$1"
 
-    curl -sS -X DELETE --cookie "$jsessionid" "$xnat_url/data/JSESSION"
+    curl -sS \
+         -X DELETE \
+         --cookie "JSESSIONID=$jsessionid" \
+         "$xnat_url/data/JSESSION"
 
     return 0
 
