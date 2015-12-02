@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- See file COPYING distributed with xnatrest for copyright and license. -->
 <ext:AtlasScalingFactor xmlns:xnat="http://nrg.wustl.edu/xnat" xmlns:ext="http://nrg.wustl.edu/ext">
-<scalingFactor>1.0</scalingFactor>
-<eta>0.0</eta>
-<eICV>3000.0</eICV>
-<baseScanNumber>1</baseScanNumber>
+<ext:scalingFactor>1.0</ext:scalingFactor>
+<ext:eta>0.0</ext:eta>
+<ext:eICV>3000.0</ext:eICV>
+<ext:baseScanNumber>1</ext:baseScanNumber>
 </ext:AtlasScalingFactor>
