@@ -142,8 +142,17 @@ class Connection:
         if r.status != 200:
             raise VersionError()
         self.version = r.data
+        # 1.6.3 and 1.6.4 both return 'Unknown version' for the version
+        # 1.6.3 will quote the header fields in CSV returns; 1.6.4 won't
         if self.version == 'Unknown version':
-            self.version = '1.6.4'
+            r = self.request('GET', '/data/projects?format=csv')
+            if r.status != 200:
+                raise VersionError()
+            header = r.data.split('\n')[0]
+            if '"' in header:
+                self.version = '1.6.3'
+            else:
+                self.version = '1.6.4'
         return
 
     def _get_jsessionid(self, auth=None):
