@@ -21,43 +21,17 @@ create_project()
 
     echo experiment...
     experiment_url=${subject_url}/experiments/s1e1
-    if [ $xnat_version = 1.6.3 ]
-    then
-        curl_ $jsessionid1 \
-              -X PUT \
-              --data-binary @xml/experiment.xml \
-              "${experiment_url}"
-    elif [ $xnat_version = 1.6.4 ]
-    then
-        curl_ $jsessionid1 \
-              -X PUT \
-              --data-binary @xml/experiment.xml \
-              "${experiment_url}?inbody=true"
-    else
-        msg="internal error (version unsupported in experiment creation)"
-        echo "$progname: $msg" >&2
-        return 1
-    fi
+    curl_ $jsessionid1 \
+          -X PUT \
+          --data-binary @xml/experiment.xml \
+          "${experiment_url}?inbody=true&xsiType=mrSessionData"
 
     echo scan...
     scan_url=${experiment_url}/scans/1
-    if [ $xnat_version = 1.6.3 ]
-    then
-        curl_ $jsessionid1 \
-              -X PUT \
-              --data-binary @xml/scan.xml \
-              "${scan_url}"
-    elif [ $xnat_version = 1.6.4 ]
-    then
-        curl_ $jsessionid1 \
-              -X PUT \
-              --data-binary @xml/scan.xml \
-              "${scan_url}?inbody=true"
-    else
-        msg="internal error (version unsupported in scan creation)"
-        echo "$progname: $msg" >&2
-        return 1
-    fi
+    curl_ $jsessionid1 \
+          -X PUT \
+          --data-binary @xml/scan.xml \
+          "${scan_url}?inbody=true&xsiType=xnat:mrScanData"
 
     echo scan files...
 
@@ -77,18 +51,18 @@ create_project()
 
     echo assessor...
     assessor_url=${experiment_url}/assessors/s1e1a1
-    if [ $xnat_version = 1.6.3 ]
+    if [ $xnat_version = 1.6.2 -o $xnat_version = 1.6.3 ]
     then
         curl_ $jsessionid1 \
               -X PUT \
               --data-binary @xml/assessor.xml \
               "${assessor_url}"
-    elif [ $xnat_version = 1.6.4 ]
+    elif [ $xnat_version = 1.6.4 -o $xnat_version = 1.6.5 ]
     then
         curl_ $jsessionid1 \
               -X PUT \
               --data-binary @xml/assessor.xml \
-              "${assessor_url}?inbody=true"
+              "${assessor_url}?inbody=true&xsiType=atlasScalingFactorData"
     else
         msg="internal error (version unsupported in assessor creation)"
         echo "$progname: $msg" >&2
@@ -134,7 +108,10 @@ fi
 
 xnat_version="$1"
 
-if [ x"$xnat_version" != x"1.6.3" -a x"$xnat_version" != x"1.6.4" ]
+if [ x"$xnat_version" != x"1.6.2" \
+     -a x"$xnat_version" != x"1.6.3" \
+     -a x"$xnat_version" != x"1.6.4" \
+     -a x"$xnat_version" != x"1.6.5" ]
 then
     echo "$progname: unsupported XNAT version" >&2
     exit 1
