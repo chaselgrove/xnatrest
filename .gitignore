@@ -3,3 +3,4 @@ ctest
 test_setup/files/
 tests.cfg
 future
+test_machines
