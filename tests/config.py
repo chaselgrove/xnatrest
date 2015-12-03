@@ -5,17 +5,19 @@ import ConfigParser
 config = ConfigParser.ConfigParser()
 config.read('tests.cfg')
 
-non_xnat_url = config.get('non-xnat', 'url')
+tests = {}
 
-servers = []
-
-for section in config.sections():
-    if not config.has_option(section, 'url'):
-        continue
-    if not config.has_option(section, 'version'):
-        continue
-    servers.append({'name': section, 
-                    'url': config.get(section, 'url'), 
-                    'version': config.get(section, 'version')})
+for server_name in config.sections():
+    server = dict(config.items(server_name))
+    if 'tests' not in server:
+        raise KeyError('config section %s has no tests option' % section)
+    if 'url' not in server:
+        raise KeyError('config section %s has no url option' % section)
+    for test in server['tests'].split(','):
+        if test == 'non-xnat':
+            pass
+        else:
+            raise ValueError('unknown test "%s"' % test)
+        tests.setdefault(test, []).append(server)
 
 # eof

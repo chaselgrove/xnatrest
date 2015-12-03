@@ -28,4 +28,15 @@ class AuthenticationError(XNATRESTError):
     def __str__(self):
         return 'error in authentication'
 
+
+
+
+
+
+
+class UnidentifiedServerError(XNATRESTError):
+
+    def __str__(self):
+        return 'could not identify server'
+
 # eof

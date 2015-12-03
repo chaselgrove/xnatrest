@@ -254,4 +254,85 @@ class Connection:
         """project(project_id) -> project resource"""
         return resources.ProjectResource(self, project_id)
 
+class Server:
+
+    def __init__(self, url):
+        self.url = url
+        self._resolve_server(self.url, [])
+        self._detect_version()
+        return
+
+    def _resolve_server(self, url, attempted_urls):
+        # resolve the actual location of the server (let the server redirect 
+        # to HTTPS, append a trailing slash, etc)
+        if url in attempted_urls:
+            raise CircularReferenceError(url)
+        server = urlparse.urlparse(url)
+        if server.scheme not in ('http', 'https'):
+            raise ValueError('unsupported scheme "%s"' % server.scheme)
+        if not server.netloc:
+            raise ValueError('no server given')
+        res = request(server, 'GET')
+        location = res.msg.getheader('Location')
+        if location:
+            attempted_urls.append(url)
+            self._resolve_server(location, attempted_urls)
+            return
+        self.parsed = server
+        return
+
+    def _detect_version(self):
+        # 1.5 always requires a JSESSIONID, even for anonymous hits, so we 
+        # hit the home page first to get a JSESSIONID before getting the 
+        # version
+        # "detect" since we might have to look at server quirks to get the 
+        # actual version
+        res = _request('GET', self.parsed, '/')
+        cookie = res.msg.getheader('Set-Cookie')
+        if not cookie or not cookie.startswith('JSESSIONID='):
+            raise UnidentifiedServerError('no JSESSIONID returned')
+        """
+        r = self.request('GET', '/data/version')
+        if r.status != 200:
+            raise VersionError()
+        self.version = r.data
+        # 1.6.3 and 1.6.4 both return 'Unknown version' for the version
+        # 1.6.3 will quote the header fields in CSV returns; 1.6.4 won't
+        if self.version == 'Unknown version':
+            r = self.request('GET', '/data/projects?format=csv')
+            if r.status != 200:
+                raise VersionError()
+            header = r.data.split('\n')[0]
+            if '"' in header:
+                self.version = '1.6.3'
+            else:
+                self.version = '1.6.4'
+        """
+        return
+
+def _request(method, server, rel_url=None, body='', headers={}):
+    """_request(method, server, rel_url=None, body='', headers={}) -> Response
+
+    performs an HTTP request
+    """
+    if server.scheme == 'http':
+        conn = httplib.HTTPConnection(server.netloc)
+    else:
+        conn = httplib.HTTPSConnection(server.netloc)
+    try:
+        if not rel_url:
+            path = server.path
+        else:
+            path = server.path.rstrip('/') + rel_url
+        conn.request(method, path, body, headers)
+        response = conn.getresponse()
+        rv = Response()
+        rv.status = response.status
+        rv.headers = HTTPHeaders(response.getheaders())
+        rv.data = response.read()
+        rv.msg = response.msg
+    finally:
+        conn.close()
+    return rv
+
 # eof
