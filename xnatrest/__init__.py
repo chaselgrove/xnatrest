@@ -291,23 +291,25 @@ class Server:
         cookie = res.msg.getheader('Set-Cookie')
         if not cookie or not cookie.startswith('JSESSIONID='):
             raise UnidentifiedServerError('no JSESSIONID returned')
-        """
-        r = self.request('GET', '/data/version')
-        if r.status != 200:
-            raise VersionError()
-        self.version = r.data
+        # get the session ID from "JSESSIONID=xxxxxxxxxxx" or 
+        # "JSESSIONID=xxxxxxxxxx; ...other cookie stuff..."
+        self.jsessionid = cookie.split(';')[0].strip()[11:]
+        headers = {'Cookie': 'JSESSIONID=%s' % self.jsessionid}
+        res = _request('GET', self.parsed, '/data/version', headers=headers)
+        if res.status != 200:
+            raise UnidentifiedServerError('could not get server version')
+        self.version = res.data
         # 1.6.3 and 1.6.4 both return 'Unknown version' for the version
         # 1.6.3 will quote the header fields in CSV returns; 1.6.4 won't
         if self.version == 'Unknown version':
-            r = self.request('GET', '/data/projects?format=csv')
-            if r.status != 200:
-                raise VersionError()
-            header = r.data.split('\n')[0]
+            res = _request('GET', self.parsed, '/data/projects?format=csv')
+            if res.status != 200:
+                raise UnidentifiedServerError('could not get server version')
+            header = res.data.split('\n')[0]
             if '"' in header:
                 self.version = '1.6.3'
             else:
                 self.version = '1.6.4'
-        """
         return
 
 def _request(method, server, rel_url=None, body='', headers={}):

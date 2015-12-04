@@ -6,6 +6,13 @@ import xnatrest
 
 class TestServer(unittest.TestCase):
 
+    def test_redirect(self):
+        server = xnatrest.Server('http://central.xnat.org')
+        self.assertEqual(server.parsed.scheme, 'https')
+        self.assertEqual(server.parsed.netloc, 'central.xnat.org')
+        self.assertEqual(server.parsed.path, '/')
+        return
+
     def test_non_xnat(self):
         if 'non-xnat' not in config.tests:
             self.skipTest('no non-xnat servers declared in config')
@@ -14,23 +21,18 @@ class TestServer(unittest.TestCase):
                 xnatrest.Server(server['url'])
         return
 
-    def test_redirect(self):
-        server = xnatrest.Server('http://central.xnat.org')
-        self.assertEqual(server.parsed.scheme, 'https')
-        self.assertEqual(server.parsed.netloc, 'central.xnat.org')
-        self.assertEqual(server.parsed.path, '/')
+    def test_version(self):
+        if 'version' not in config.tests:
+            self.skipTest('no version servers declared in config')
+        for server in config.tests['version']:
+            s = xnatrest.Server(server['url'])
+            self.assertEqual(s.version, server['version'], server['name'])
         return
 
 """
     def test_nojsessionid(self):
         with self.assertRaises(xnatrest.JSESSIONIDError):
             c = xnatrest.Connection(config.non_xnat_url)
-        return
-
-    def test_version(self):
-        for server in config.servers:
-            c = xnatrest.Connection(server['url'])
-            self.assertEqual(c.version, server['version'], server['name'])
         return
 
     def test_bad_auth(self):
