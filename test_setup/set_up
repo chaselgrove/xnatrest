@@ -51,7 +51,13 @@ create_project()
 
     echo assessor...
     assessor_url=${experiment_url}/assessors/s1e1a1
-    if [ $xnat_version = 1.6.2 -o $xnat_version = 1.6.3 ]
+    if [ $xnat_version = 1.5.0 \
+         -o $xnat_version = 1.5.1 \
+         -o $xnat_version = 1.5.2 \
+         -o $xnat_version = 1.5.3 \
+         -o $xnat_version = 1.5.4 \
+         -o $xnat_version = 1.6.2 \
+         -o $xnat_version = 1.6.3 ]
     then
         curl_ $jsessionid1 \
               -X PUT \
@@ -108,7 +114,12 @@ fi
 
 xnat_version="$1"
 
-if [ x"$xnat_version" != x"1.6.2" \
+if [ x"$xnat_version" != x"1.5.0" \
+     -a x"$xnat_version" != x"1.5.1" \
+     -a x"$xnat_version" != x"1.5.2" \
+     -a x"$xnat_version" != x"1.5.3" \
+     -a x"$xnat_version" != x"1.5.4" \
+     -a x"$xnat_version" != x"1.6.2" \
      -a x"$xnat_version" != x"1.6.3" \
      -a x"$xnat_version" != x"1.6.4" \
      -a x"$xnat_version" != x"1.6.5" ]
