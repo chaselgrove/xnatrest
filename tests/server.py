@@ -13,20 +13,16 @@ class TestServer(unittest.TestCase):
         self.assertEqual(server.parsed.path, '/')
         return
 
-    def test_non_xnat(self):
-        if 'non-xnat' not in config.tests:
-            self.skipTest('no non-xnat servers declared in config')
-        for server in config.tests['non-xnat']:
-            with self.assertRaises(xnatrest.UnidentifiedServerError):
-                xnatrest.Server(server['url'])
+    @config.test_foreach('non-xnat')
+    def test_non_xnat(self, server):
+        with self.assertRaises(xnatrest.UnidentifiedServerError):
+            xnatrest.Server(server['url'])
         return
 
-    def test_version(self):
-        if 'version' not in config.tests:
-            self.skipTest('no version servers declared in config')
-        for server in config.tests['version']:
-            s = xnatrest.Server(server['url'])
-            self.assertEqual(s.version, server['version'], server['name'])
+    @config.test_foreach('version')
+    def test_version(self, server):
+        s = xnatrest.Server(server['url'])
+        self.assertEqual(s.version, server['version'], server['name'])
         return
 
 """
