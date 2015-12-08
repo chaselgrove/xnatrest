@@ -2,6 +2,6 @@
 
 from .exceptions import *
 from .core import *
-from . import resources
+from .resources import *
 
 # eof

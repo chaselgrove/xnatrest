@@ -27,7 +27,7 @@ class HTTPHeaders:
     name comparisons are case-insensitive
     """
 
-    def __init__(self, items):
+    def __init__(self, items=[]):
         self.items = items
         return
 
@@ -64,41 +64,6 @@ class Response:
 
     should not be instantiated directly by the user; use request() instead
     """
-
-def request(server, method, rel_url=None, body='', headers={}):
-    """request(server, method, rel_url=None, body='', headers={}) -> Response
-
-    performs an HTTP request
-    """
-    if server.scheme == 'http':
-        conn = httplib.HTTPConnection(server.netloc)
-    else:
-        conn = httplib.HTTPSConnection(server.netloc)
-    try:
-        if not rel_url:
-            path = server.path
-        else:
-            path = server.path.rstrip('/') + rel_url
-        conn.request(method, path, body, headers)
-        response = conn.getresponse()
-        status = response.status
-        response_headers = HTTPHeaders(response.getheaders())
-        data = response.read()
-        msg = response.msg
-    finally:
-        conn.close()
-    res = Response()
-    res.server = server
-    res.method = method
-    res.rel_url = rel_url
-    res.body = body
-    res.request_headers = headers
-    res.path = path
-    res.status = status
-    res.response_headers = response_headers
-    res.data = data
-    res.msg = msg
-    return res
 
 class Connection:
 
@@ -253,23 +218,25 @@ class Server:
         self._detect_version()
         return
 
+    def __str__(self):
+        return '<Server %s (%s)>' % (self.url, self.version)
+
     def _resolve_server(self, url, attempted_urls):
         # resolve the actual location of the server (let the server redirect 
         # to HTTPS, append a trailing slash, etc)
         if url in attempted_urls:
             raise CircularReferenceError(url)
-        server = urlparse.urlparse(url)
-        if server.scheme not in ('http', 'https'):
-            raise ValueError('unsupported scheme "%s"' % server.scheme)
-        if not server.netloc:
+        self.parsed = urlparse.urlparse(url)
+        if self.parsed.scheme not in ('http', 'https'):
+            raise ValueError('unsupported scheme "%s"' % self.parsed.scheme)
+        if not self.parsed.netloc:
             raise ValueError('no server given')
-        res = request(server, 'GET')
+        res = self._request('GET', '/')
         location = res.msg.getheader('Location')
         if location:
             attempted_urls.append(url)
             self._resolve_server(location, attempted_urls)
             return
-        self.parsed = server
         return
 
     def _detect_version(self):
@@ -278,15 +245,15 @@ class Server:
         # version
         # "detect" since we might have to look at server quirks to get the 
         # actual version
-        res = _request('GET', self.parsed, '/')
+        res = self._request('GET', '/')
         cookie = res.msg.getheader('Set-Cookie')
         if not cookie or not cookie.startswith('JSESSIONID='):
             raise UnidentifiedServerError('no JSESSIONID returned')
         # get the session ID from "JSESSIONID=xxxxxxxxxxx" or 
         # "JSESSIONID=xxxxxxxxxx; ...other cookie stuff..."
-        self.jsessionid = cookie.split(';')[0].strip()[11:]
-        headers = {'Cookie': 'JSESSIONID=%s' % self.jsessionid}
-        res = _request('GET', self.parsed, '/data/version', headers=headers)
+        self._jsessionid = cookie.split(';')[0].strip()[11:]
+        headers = {'Cookie': 'JSESSIONID=%s' % self._jsessionid}
+        res = self._request('GET', '/data/version', headers=headers)
         if res.status == 404:
             self.version = '1.5'
             return
@@ -297,7 +264,7 @@ class Server:
         # 1.6.3 will quote the header fields in CSV returns; 1.6.4 won't
         if self.version != 'Unknown version':
             return
-        res = _request('GET', self.parsed, '/data/projects?format=csv')
+        res = self._request('GET', '/data/projects?format=csv')
         if res.status != 200:
             raise UnidentifiedServerError('could not get server version')
         header = res.data.split('\n')[0]
@@ -307,30 +274,25 @@ class Server:
             self.version = '1.6.4'
         return
 
-def _request(method, server, rel_url=None, body='', headers={}):
-    """_request(method, server, rel_url=None, body='', headers={}) -> Response
-
-    performs an HTTP request
-    """
-    if server.scheme == 'http':
-        conn = httplib.HTTPConnection(server.netloc)
-    else:
-        conn = httplib.HTTPSConnection(server.netloc)
-    try:
-        if not rel_url:
-            path = server.path
+    def _request(self, method, rel_url=None, headers={}, body=''):
+        if self.parsed.scheme == 'http':
+            conn = httplib.HTTPConnection(self.parsed.netloc)
         else:
-            path = server.path.rstrip('/') + rel_url
-        conn.request(method, path, body, headers)
-        response = conn.getresponse()
-        rv = Response()
-        rv.status = response.status
-        rv.headers = HTTPHeaders(response.getheaders())
-        rv.data = response.read()
-        rv.msg = response.msg
-    finally:
-        conn.close()
-    return rv
-
+            conn = httplib.HTTPSConnection(self.parsed.netloc)
+        try:
+            if not rel_url:
+                path = self.parsed.path
+            else:
+                path = self.parsed.path.rstrip('/') + rel_url
+            conn.request(method, path, body, headers)
+            response = conn.getresponse()
+            rv = Response()
+            rv.status = response.status
+            rv.headers = HTTPHeaders(response.getheaders())
+            rv.data = response.read()
+            rv.msg = response.msg
+        finally:
+            conn.close()
+        return rv
 
 # eof
