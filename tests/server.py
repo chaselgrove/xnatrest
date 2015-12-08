@@ -14,15 +14,15 @@ class TestServer(unittest.TestCase):
         return
 
     @config.test_foreach('non-xnat')
-    def test_non_xnat(self, server):
+    def test_non_xnat(self, server_info):
         with self.assertRaises(xnatrest.UnidentifiedServerError):
-            xnatrest.Server(server['url'])
+            xnatrest.Server(server_info['url'])
         return
 
     @config.test_foreach('version')
-    def test_version(self, server):
-        s = xnatrest.Server(server['url'])
-        self.assertEqual(s.version, server['version'], server['name'])
+    def test_version(self, server_info):
+        s = xnatrest.Server(server_info['url'])
+        self.assertEqual(s.version, server_info['version'], server_info['name'])
         return
 
 """
