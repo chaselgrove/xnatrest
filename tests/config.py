@@ -2,6 +2,8 @@
 
 import ConfigParser
 
+known_tests = ('non-xnat', 'version')
+
 class test_foreach:
 
     """decorator for looping over test servers
@@ -37,22 +39,39 @@ class test_foreach:
 config = ConfigParser.ConfigParser()
 config.read('tests.cfg')
 
+aliases = {}
+if config.has_section('aliases'):
+    for (alias, tests) in config.items('aliases'):
+        aliases[alias] = []
+        for test in [ el.strip() for el in tests.split(',') ]:
+            aliases[alias].append(test)
+
 tests = {}
 
 for server_name in config.sections():
+    if server_name == 'aliases':
+        continue
     server = dict(config.items(server_name))
     server['name'] = server_name
     if 'tests' not in server:
         raise KeyError('config section %s has no tests option' % server)
     if 'url' not in server:
         raise KeyError('config section %s has no url option' % server)
-    for test in server['tests'].split(','):
-        if test == 'non-xnat':
-            pass
-        elif test == 'version':
-            pass
+    server_tests = set()
+    for test in [ el.strip() for el in server['tests'].split(',') ]:
+        if test in aliases:
+            server_tests.update(aliases[test])
+        elif test in known_tests:
+            server_tests.add(test)
         else:
             raise ValueError('unknown test "%s"' % test)
+    for test in server_tests:
         tests.setdefault(test, []).append(server)
+
+if __name__ == '__main__':
+    for test in tests:
+        print test
+        for server in tests[test]:
+            print '    %s' % server['name']
 
 # eof

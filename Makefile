@@ -3,6 +3,9 @@
 test : 
 	python -m unittest -vb tests
 
+testconfig : 
+	python -m tests.config
+
 clean : 
 	rm -f MANIFEST xnatrest/*.pyc tests/*.pyc
 
