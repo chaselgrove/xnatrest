@@ -65,6 +65,9 @@ class Response:
     should not be instantiated directly by the user; use request() instead
     """
 
+    def __str__(self):
+        return '<Response %d>' % self.status
+
 class Server:
 
     def __init__(self, url):
