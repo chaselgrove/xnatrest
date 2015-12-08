@@ -13,27 +13,6 @@ class CircularReferenceError(XNATRESTError):
     def __str__(self):
         return 'circular reference to %s' % self.url
 
-class VersionError(XNATRESTError):
-
-    def __str__(self):
-        return 'could not get version'
-
-class JSESSIONIDError(XNATRESTError):
-
-    def __str__(self):
-        return 'error getting JSESSIONID'
-
-class AuthenticationError(XNATRESTError):
-
-    def __str__(self):
-        return 'error in authentication'
-
-
-
-
-
-
-
 class UnidentifiedServerError(XNATRESTError):
 
     def __str__(self):
