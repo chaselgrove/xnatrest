@@ -31,10 +31,13 @@ class JsessionResource(BaseResource):
     def get(self, auth=None, headers=None, body=''):
         if not headers:
             headers = {}
-        if self.server.version in ('1.5', '1.5.2', '1.5.3', '1.5.4', '1.6.2.1'):
-            if not 'Cookie' in headers \
-                or not headers['Cookie'].startswith('JSESSIONID='):
+        if isinstance(auth, basestring):
+            headers['Cookie'] = 'JSESSIONID=%s' % auth
+        elif auth is None:
+            if self.server.version in ('1.5', '1.5.2', '1.5.3', '1.5.4', '1.6.2.1'):
                 headers['Cookie'] = 'JSESSIONID=%s' % self.server._jsessionid
+        else:
+            raise TypeError('auth must be a basestring or None')
         response = self.server._request('GET', '/data/JSESSION', headers)
         return response
 

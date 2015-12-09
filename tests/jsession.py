@@ -20,8 +20,7 @@ class TestJsession(unittest.TestCase):
         resource = xnatrest.JsessionResource(server)
         response = resource.get()
         token = response.data
-        headers = {'Cookie': 'JSESSIONID=%s' % token}
-        response2 = resource.get(headers=headers)
+        response2 = resource.get(auth=token)
         self.assertEqual(response2.status, 200, server_info['name'])
         self.assertEqual(response2.data, token, server_info['name'])
         return
