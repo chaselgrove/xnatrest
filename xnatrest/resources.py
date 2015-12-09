@@ -27,13 +27,25 @@ class BaseResource:
             headers = {}
         elif not isinstance(headers, dict):
             raise TypeError('headers must be a dictionary or None')
+        auth_msg = 'auth must be a basestring, a two-tuple of strings, or None'
         if isinstance(auth, basestring):
             headers['Cookie'] = 'JSESSIONID=%s' % auth
+        elif isinstance(auth, (list, tuple)):
+            if len(auth) != 2:
+                raise ValueError(auth_msg)
+            up_string = '%s:%s' % tuple(auth)
+            auth_string = 'Basic %s' % up_string.encode('base64')
+            auth_string = auth_string.replace('\n', '')
+            headers['Authorization'] = auth_string
         elif auth is None:
-            if self.server.version in ('1.5', '1.5.2', '1.5.3', '1.5.4', '1.6.2.1'):
+            if self.server.version in ('1.5', 
+                                       '1.5.2', 
+                                       '1.5.3', 
+                                       '1.5.4', 
+                                       '1.6.2.1'):
                 headers['Cookie'] = 'JSESSIONID=%s' % self.server._jsessionid
         else:
-            raise TypeError('auth must be a basestring or None')
+            raise TypeError(auth_msg)
         if not isinstance(body, basestring):
             raise TypeError('body must be a basestring')
         return (headers, body)
@@ -57,6 +69,17 @@ class JsessionResource(BaseResource):
     def get(self, auth=None, headers=None, body=''):
         (headers, body) = self._prep_args(auth, headers, body)
         response = self.server._request('GET', '/data/JSESSION', headers)
+        # 1.6.3-1.6.5 returns 200 if a bad JSESSIONID is passed; fix this to 
+        # 401 (we know this has happened when the returned session identifier 
+        # differs from the passed one
+        if isinstance(auth, basestring) and self.server.version in ('1.6.3', 
+                                                                    '1.6.4', 
+                                                                    '1.6.5'):
+            if auth != response.data:
+                response = Response()
+                response.status = 401
+                response.headers = httplib.HTTPMessage(StringIO.StringIO())
+                response.data = ''
         return response
 
 # eof
