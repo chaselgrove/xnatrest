@@ -1,6 +1,8 @@
 # See file COPYING distributed with xnatrest for copyright and license.
 
 import urllib
+import StringIO
+import httplib
 from .core import *
 
 class BaseResource:
@@ -14,7 +16,7 @@ class BaseResource:
     def _method_not_allowed(self, auth=None, headers={}, body=''):
         response = Response()
         response.status = 405
-        response.headers = HTTPHeaders()
+        response.headers = httplib.HTTPMessage(StringIO.StringIO())
         response.data = ''
         return response
 

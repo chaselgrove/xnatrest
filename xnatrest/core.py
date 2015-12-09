@@ -5,59 +5,6 @@ import httplib
 
 from .exceptions import *
 
-class HTTPHeaders:
-
-    """class for storing HTTP response headers, supporting multiple values 
-    for each header
-
-    constructor is a list of 2-tuples (name, value)
-
-    methods:
-
-        items -- the list of 2-tuples
-
-        get(name) -- get the first occurrence of the header
-
-                     raises KeyError if the header is not found
-
-                     h.get(name) is the same behavior as h[name]
-
-        get_all(name) -- get a tuple of all occurrences of the header
-
-    name comparisons are case-insensitive
-    """
-
-    def __init__(self, items=[]):
-        self.items = items
-        return
-
-    def __getitem__(self, key):
-        key_l = key.lower()
-        for (name, value) in self.items:
-            if name.lower() == key_l:
-                return value
-        raise KeyError(key)
-
-    def __contains__(self, key):
-        key_l = key.lower()
-        for (name, value) in self.items:
-            if name.lower() == key_l:
-                return True
-        return False
-
-    def get(self, name):
-        return self[name]
-
-    def get_all(self, key):
-        values = []
-        key_l = key.lower()
-        for (name, value) in self.items():
-            if name.lower() == key_l:
-                values.append(value)
-        if not values:
-            raise KeyError(key)
-        return values
-
 class Response:
 
     """response object
@@ -90,7 +37,7 @@ class Server:
         if not self.parsed.netloc:
             raise ValueError('no server given')
         res = self._request('GET', '/')
-        location = res.msg.getheader('Location')
+        location = res.headers.getheader('Location')
         if location:
             attempted_urls.append(url)
             self._resolve_server(location, attempted_urls)
@@ -104,7 +51,7 @@ class Server:
         # "detect" since we might have to look at server quirks to get the 
         # actual version
         res = self._request('GET', '/')
-        cookie = res.msg.getheader('Set-Cookie')
+        cookie = res.headers.getheader('Set-Cookie')
         if not cookie or not cookie.startswith('JSESSIONID='):
             raise UnidentifiedServerError('no JSESSIONID returned')
         # get the session ID from "JSESSIONID=xxxxxxxxxxx" or 
@@ -146,9 +93,8 @@ class Server:
             response = conn.getresponse()
             rv = Response()
             rv.status = response.status
-            rv.headers = HTTPHeaders(response.getheaders())
+            rv.headers = response.msg
             rv.data = response.read()
-            rv.msg = response.msg
         finally:
             conn.close()
         return rv
