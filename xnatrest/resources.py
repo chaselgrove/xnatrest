@@ -13,7 +13,33 @@ class BaseResource:
         self.server = server
         return
 
-    def _method_not_allowed(self, auth=None, headers={}, body=''):
+    def _prep_args(self, auth, headers, body):
+        """resource._prep_args(auth, headers, body) -> (headers, body)
+
+        checks types for auth, headers, and body and raises TypeError as 
+        appropriate
+
+        auth is wrapped into the headers as needed
+
+        headers is returned as a dictionary and body as a string
+        """
+        if headers is None:
+            headers = {}
+        elif not isinstance(headers, dict):
+            raise TypeError('headers must be a dictionary or None')
+        if isinstance(auth, basestring):
+            headers['Cookie'] = 'JSESSIONID=%s' % auth
+        elif auth is None:
+            if self.server.version in ('1.5', '1.5.2', '1.5.3', '1.5.4', '1.6.2.1'):
+                headers['Cookie'] = 'JSESSIONID=%s' % self.server._jsessionid
+        else:
+            raise TypeError('auth must be a basestring or None')
+        if not isinstance(body, basestring):
+            raise TypeError('body must be a basestring')
+        return (headers, body)
+
+    def _method_not_allowed(self, auth=None, headers=None, body=''):
+        self._prep_args(auth, headers, body)
         response = Response()
         response.status = 405
         response.headers = httplib.HTTPMessage(StringIO.StringIO())
@@ -29,15 +55,7 @@ class BaseResource:
 class JsessionResource(BaseResource):
 
     def get(self, auth=None, headers=None, body=''):
-        if not headers:
-            headers = {}
-        if isinstance(auth, basestring):
-            headers['Cookie'] = 'JSESSIONID=%s' % auth
-        elif auth is None:
-            if self.server.version in ('1.5', '1.5.2', '1.5.3', '1.5.4', '1.6.2.1'):
-                headers['Cookie'] = 'JSESSIONID=%s' % self.server._jsessionid
-        else:
-            raise TypeError('auth must be a basestring or None')
+        (headers, body) = self._prep_args(auth, headers, body)
         response = self.server._request('GET', '/data/JSESSION', headers)
         return response
 
