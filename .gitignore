@@ -5,3 +5,5 @@ tests.cfg
 future
 test_machines
 probe
+VERSION_BEHAVIOR
+docs
