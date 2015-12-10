@@ -2,6 +2,7 @@
 
 import urlparse
 import httplib
+import StringIO
 
 from .exceptions import *
 
@@ -11,6 +12,24 @@ class Response:
 
     should not be instantiated directly by the user; use request() instead
     """
+
+    def __init__(self, status, headers=None, data=''):
+        self.status = status
+        if headers is None:
+            self.headers = httplib.HTTPMessage(StringIO.StringIO())
+        else:
+            self.headers = headers
+        self.cookies = {}
+        for header in self.headers.getallmatchingheaders('set-cookie'):
+            header_value = header[12:]
+            cookie = header_value.split(';')[0].strip()
+            try:
+                (name, value) = cookie.split('=', 1)
+                self.cookies[name] = value
+            except ValueError:
+                pass
+        self.data = data
+        return
 
     def __str__(self):
         return '<Response %d>' % self.status
@@ -91,10 +110,7 @@ class Server:
                 path = self.parsed.path.rstrip('/') + rel_url
             conn.request(method, path, body, headers)
             response = conn.getresponse()
-            rv = Response()
-            rv.status = response.status
-            rv.headers = response.msg
-            rv.data = response.read()
+            rv = Response(response.status, response.msg, response.read())
         finally:
             conn.close()
         return rv
