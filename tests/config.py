@@ -2,7 +2,7 @@
 
 import ConfigParser
 
-known_tests = ('non-xnat', 'version')
+known_tests = ('non-xnat', 'version', 'jsession')
 
 class test_foreach:
 
@@ -44,6 +44,8 @@ if config.has_section('aliases'):
     for (alias, tests) in config.items('aliases'):
         aliases[alias] = []
         for test in [ el.strip() for el in tests.split(',') ]:
+            if test not in known_tests:
+                raise ValueError('unknown test "%s"' % test)
             aliases[alias].append(test)
 
 tests = {}
