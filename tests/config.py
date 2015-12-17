@@ -2,7 +2,7 @@
 
 import ConfigParser
 
-known_tests = ('non-xnat', 'version', 'jsession')
+known_tests = ('non-xnat', 'version', 'jsession', 'projects')
 
 class test_foreach:
 
