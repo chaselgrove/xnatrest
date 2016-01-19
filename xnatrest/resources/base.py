@@ -1,6 +1,6 @@
 # See file COPYING distributed with xnatrest for copyright and license.
 
-from .. import Server, Response
+from .. import Server, Response, create_httpmessage
 
 class BaseResource:
 
@@ -20,10 +20,8 @@ class BaseResource:
 
         headers is returned as a dictionary and body as a string
         """
-        if headers is None:
-            headers = {}
-        elif not isinstance(headers, dict):
-            raise TypeError('headers must be a dictionary or None')
+        # work with headers in an HTTPMessage object for case-insensitive logic
+        headers = create_httpmessage(headers)
         auth_msg = 'auth must be a basestring, a two-tuple of strings, or None'
         if isinstance(auth, basestring):
             headers['Cookie'] = 'JSESSIONID=%s' % auth

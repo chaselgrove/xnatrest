@@ -6,6 +6,24 @@ import StringIO
 
 from .exceptions import *
 
+def create_httpmessage(headers):
+    """create_httpmessage(headers) -> HTTPMessage object
+
+    take an HTTPMessage object, None, or a dictionary and return an 
+    HTTPMessage object
+    """
+    if isinstance(headers, httplib.HTTPMessage):
+        return headers
+    obj = httplib.HTTPMessage(StringIO.StringIO())
+    if headers is None:
+        return obj
+    if isinstance(headers, dict):
+        for key in headers:
+            obj[key] = headers[key]
+        return obj
+    msg = 'headers must be None, a dictionary, or an HTTPMessage instance'
+    raise TypeError(msg)
+
 class Response:
 
     """response object
@@ -15,13 +33,7 @@ class Response:
 
     def __init__(self, status, headers=None, data=''):
         self.status = status
-        if isinstance(headers, httplib.HTTPMessage):
-            self.headers = headers
-        else:
-            self.headers = httplib.HTTPMessage(StringIO.StringIO())
-            if headers is not None:
-                for key in headers:
-                    self.headers[key] = headers[key]
+        self.headers = create_httpmessage(headers)
         self.cookies = {}
         for header in self.headers.getallmatchingheaders('set-cookie'):
             header_value = header[12:]
@@ -111,7 +123,7 @@ class Server:
                 path = self.parsed.path
             else:
                 path = self.parsed.path.rstrip('/') + rel_url
-            conn.request(method, path, body, headers)
+            conn.request(method, path, body, dict(headers))
             response = conn.getresponse()
             rv = Response(response.status, response.msg, response.read())
         finally:
