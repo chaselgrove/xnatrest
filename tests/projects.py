@@ -34,8 +34,10 @@ class TestProjectsGet(unittest.TestCase):
     @config.test_foreach('projects')
     def test_get_token_auth(self, server_info):
         server = xnatrest.Server(server_info['url'])
+        session_resource = xnatrest.JsessionResource(server)
+        token = session_resource.get(auth=('test1', 'test1')).data
         resource = xnatrest.ProjectsResource(server)
-        response = resource.get()
+        response = resource.get(auth=token)
         self.assertEqual(response.status, 200, server_info['name'])
         return
 
