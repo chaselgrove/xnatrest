@@ -41,6 +41,72 @@ class TestProjectsGet(unittest.TestCase):
         self.assertEqual(response.status, 200, server_info['name'])
         return
 
+class TestProjectsGetWithContentType(unittest.TestCase):
+
+    @config.test_foreach('projects')
+    def test_get_ct_undefined(self, server_info):
+        server = xnatrest.Server(server_info['url'])
+        resource = xnatrest.ProjectsResource(server)
+        response = resource.get()
+        # we don't actually care that content-type is application/json, just 
+        # that it is set and contains a valid value
+        self.assertEquals(response.headers['content-type'], 
+                          'application/json', 
+                          server_info['name'])
+        return
+
+    @config.test_foreach('projects')
+    def test_get_ct_unknown(self, server_info):
+        server = xnatrest.Server(server_info['url'])
+        resource = xnatrest.ProjectsResource(server)
+        response = resource.get(headers={'content-type': 'audio/vorbis'})
+        self.assertEqual(response.status, 406, server_info['name'])
+        return
+
+    @config.test_foreach('projects')
+    def test_get_ct_html(self, server_info):
+        server = xnatrest.Server(server_info['url'])
+        resource = xnatrest.ProjectsResource(server)
+        response = resource.get(headers={'content-type': 'text/html'})
+        self.assertEqual(response.status, 200, server_info['name'])
+        self.assertEquals(response.headers['content-type'], 
+                          'text/html', 
+                          server_info['name'])
+        return
+
+    @config.test_foreach('projects')
+    def test_get_ct_csv(self, server_info):
+        server = xnatrest.Server(server_info['url'])
+        resource = xnatrest.ProjectsResource(server)
+        response = resource.get(headers={'content-type': 'text/csv'})
+        self.assertEqual(response.status, 200, server_info['name'])
+        self.assertEquals(response.headers['content-type'], 
+                          'text/csv', 
+                          server_info['name'])
+        return
+
+    @config.test_foreach('projects')
+    def test_get_ct_json(self, server_info):
+        server = xnatrest.Server(server_info['url'])
+        resource = xnatrest.ProjectsResource(server)
+        response = resource.get(headers={'content-type': 'application/json'})
+        self.assertEqual(response.status, 200, server_info['name'])
+        self.assertEquals(response.headers['content-type'], 
+                          'application/json', 
+                          server_info['name'])
+        return
+
+    @config.test_foreach('projects')
+    def test_get_ct_xml(self, server_info):
+        server = xnatrest.Server(server_info['url'])
+        resource = xnatrest.ProjectsResource(server)
+        response = resource.get(headers={'content-type': 'text/xml'})
+        self.assertEqual(response.status, 200, server_info['name'])
+        self.assertEquals(response.headers['content-type'], 
+                          'text/xml', 
+                          server_info['name'])
+        return
+
 #class TestProjectsPost(unittest.TestCase):
 #
 #    @config.test_foreach('projects')

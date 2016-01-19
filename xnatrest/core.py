@@ -15,10 +15,13 @@ class Response:
 
     def __init__(self, status, headers=None, data=''):
         self.status = status
-        if headers is None:
-            self.headers = httplib.HTTPMessage(StringIO.StringIO())
-        else:
+        if isinstance(headers, httplib.HTTPMessage):
             self.headers = headers
+        else:
+            self.headers = httplib.HTTPMessage(StringIO.StringIO())
+            if headers is not None:
+                for key in headers:
+                    self.headers[key] = headers[key]
         self.cookies = {}
         for header in self.headers.getallmatchingheaders('set-cookie'):
             header_value = header[12:]
