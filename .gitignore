@@ -1,9 +1,4 @@
-ctest
 *.pyc
 test_setup/files/
 tests.cfg
-future
-test_machines
-probe
-VERSION_BEHAVIOR
-docs
+devel
