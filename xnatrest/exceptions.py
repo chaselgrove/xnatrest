@@ -2,7 +2,7 @@
 
 class XNATRESTError(Exception):
 
-    """base class for llxnat exceptions"""
+    """base class for xnatrest exceptions"""
 
 class CircularReferenceError(XNATRESTError):
 
